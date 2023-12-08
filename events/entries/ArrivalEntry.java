@@ -1,4 +1,4 @@
-package entries;
+package events.entries;
 
 public class ArrivalEntry extends Entry
 {
@@ -6,5 +6,4 @@ public class ArrivalEntry extends Entry
     {
         super(key);
     }
-
 }

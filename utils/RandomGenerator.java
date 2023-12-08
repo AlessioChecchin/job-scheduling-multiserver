@@ -2,7 +2,8 @@ package utils;
 
 import java.util.Random;
 
-public class RandomGenerator extends Random {
+public class RandomGenerator extends Random
+{
     public RandomGenerator(long seed)
     {
         super(seed);

@@ -1,7 +1,10 @@
 import config.CategoryConfig;
 import config.ProjectConfig;
-import entries.*;
-import scheduling.DefaultPolicy;
+import events.*;
+import events.entries.ArrivalEntry;
+import events.entries.Entry;
+import events.entries.FinishEntry;
+import scheduling.policy.DefaultPolicy;
 import scheduling.Scheduler;
 import scheduling.Server;
 import utils.RandomGenerator;
@@ -12,26 +15,78 @@ import java.util.*;
 
 public class Simulator
 {
-    public ProjectConfig config;
-    public List<CategoryConfig> categoryConfig;
-    private Scheduler scheduler;
-    private EventHandler evtHandler;
-
-    public Simulator(String path)
+    public Simulator(String path) throws IOException
     {
         // Reading input from file
         readInput(path);
 
-        // Creating an event handler
-        evtHandler = new EventHandler(config);
+        history = new PriorityQueue<>();
+        currentRun = 0;
+    }
 
+    protected void run()
+    {
+        // Creating an event handler
+        evtHandler = new EventHandler();
+
+        initializeJobs();
+
+        // Creating a new scheduler.
+        Scheduler scheduler = new Scheduler(createServers(), evtHandler, new DefaultPolicy());
+
+        // Running until all jobs are finished
+        while(evtHandler.hasEvent())
+        {
+            Entry entry = evtHandler.remove();
+            if(entry instanceof ArrivalEntry)
+            {
+                if(scheduler.getArrivedJobs() < config.nTotalJobs)
+                {
+                    evtHandler.generateArrivalEvent(entry.getCategory(), entry.getKey());
+                    scheduler.schedule(entry);
+
+                    pushToHistory(entry);
+
+                }
+            }
+            else
+            {
+                scheduler.schedule(entry);
+
+                pushToHistory(entry);
+            }
+        }
+    }
+
+    public void nextRun()
+    {
+        if(currentRun >= config.rSimulationRepetitions)
+        {
+            throw new IllegalStateException();
+        }
+
+        run();
+
+        currentRun++;
+    }
+
+    public boolean hasNext()
+    {
+        return currentRun < config.rSimulationRepetitions;
+    }
+
+    protected void initializeJobs()
+    {
         // Initializing jobs
         for(int i = 0; i < config.hCategoriesNumber; i++)
         {
-            CategoryConfig catConfig = categoryConfig.get(i);
+            CategoryConfig catConfig = categories.get(i);
             evtHandler.generateArrivalEvent(catConfig, 0);
         }
+    }
 
+    protected List<Server> createServers()
+    {
         List<Server> servers = new ArrayList<>();
 
         // Creating K servers.
@@ -40,124 +95,137 @@ public class Simulator
             servers.add(new Server(i));
         }
 
-        // Creating a new scheduler.
-        scheduler = new Scheduler(servers, evtHandler, new DefaultPolicy());
-
-        // Running until all jobs are finished
-        while(evtHandler.hasEvent())
-        {
-            Entry entry = evtHandler.remove();
-            if(entry instanceof ArrivalEntry && evtHandler.getArrivalCount() < config.nTotalJobs)
-            {
-                evtHandler.generateArrivalEvent(entry.getCategory(), entry.getKey());
-            }
-
-            scheduler.schedule(entry);
-
-        }
-
-        outputResult();
-
+        return servers;
     }
 
-    protected void readInput(String path)
+    protected void readInput(String path) throws IOException
     {
-        try (Scanner fileScanner = new Scanner(new FileReader(path)))
-        {
-            if(fileScanner.hasNextLine()) {
-                Scanner metaScanner = new Scanner(fileScanner.nextLine());
-                metaScanner.useDelimiter(",");
+        Scanner fileScanner = new Scanner(new FileReader(path));
 
-                int kServerNumber          = Integer.parseInt(metaScanner.next());
-                int hCategoriesNumber      = Integer.parseInt(metaScanner.next());
-                int nTotalJobs             = Integer.parseInt(metaScanner.next());
-                int rSimulationRepetitions = Integer.parseInt(metaScanner.next());
-                int pSchedulingPolicyType  = Integer.parseInt(metaScanner.next());
+        if(fileScanner.hasNextLine()) {
+            Scanner metaScanner = new Scanner(fileScanner.nextLine());
+            metaScanner.useDelimiter(",");
 
-                config = new ProjectConfig(
-                        kServerNumber,
-                        hCategoriesNumber,
-                        nTotalJobs,
-                        rSimulationRepetitions,
-                        pSchedulingPolicyType
-                );
+            int kServerNumber          = Integer.parseInt(metaScanner.next());
+            int hCategoriesNumber      = Integer.parseInt(metaScanner.next());
+            int nTotalJobs             = Integer.parseInt(metaScanner.next());
+            int rSimulationRepetitions = Integer.parseInt(metaScanner.next());
+            int pSchedulingPolicyType  = Integer.parseInt(metaScanner.next());
 
-                metaScanner.close();
-            }
+            config = new ProjectConfig(
+                    kServerNumber,
+                    hCategoriesNumber,
+                    nTotalJobs,
+                    rSimulationRepetitions,
+                    pSchedulingPolicyType
+            );
 
-            categoryConfig = new ArrayList<>();
-
-            int count = 0;
-            while (fileScanner.hasNextLine() && count < config.hCategoriesNumber)
-            {
-                Scanner paramScanner = new Scanner((fileScanner.nextLine()));
-                paramScanner.useDelimiter(",");
-
-                double lambdaArrival    = Double.parseDouble(paramScanner.next());
-                double lambdaService    = Double.parseDouble(paramScanner.next());
-                int seedArrival      = Integer.parseInt(paramScanner.next());
-                int seedService      = Integer.parseInt(paramScanner.next());
-                RandomGenerator arrivalGenerator = new RandomGenerator(seedArrival);
-                RandomGenerator serviceGenerator = new RandomGenerator(seedService);
-
-                CategoryConfig catConfig = new CategoryConfig(
-                        count,
-                        lambdaArrival,
-                        lambdaService,
-                        seedArrival,
-                        seedService,
-                        arrivalGenerator,
-                        serviceGenerator
-                );
-
-                categoryConfig.add(catConfig);
-
-                paramScanner.close();
-
-                count++;
-            }
-
+            metaScanner.close();
         }
-        catch (IOException e)
+
+        categories = new ArrayList<>();
+
+        int count = 0;
+        while (fileScanner.hasNextLine() && count < config.hCategoriesNumber)
         {
-            System.out.println("IOException caught: " + e.getMessage());
+            Scanner paramScanner = new Scanner((fileScanner.nextLine()));
+            paramScanner.useDelimiter(",");
+
+            double lambdaArrival             = Double.parseDouble(paramScanner.next());
+            double lambdaService             = Double.parseDouble(paramScanner.next());
+            int seedArrival                  = Integer.parseInt(paramScanner.next());
+            int seedService                  = Integer.parseInt(paramScanner.next());
+            RandomGenerator arrivalGenerator = new RandomGenerator(seedArrival);
+            RandomGenerator serviceGenerator = new RandomGenerator(seedService);
+
+            CategoryConfig catConfig = new CategoryConfig(
+                    count,
+                    lambdaArrival,
+                    lambdaService,
+                    seedArrival,
+                    seedService,
+                    arrivalGenerator,
+                    serviceGenerator
+            );
+
+            categories.add(catConfig);
+
+            paramScanner.close();
+
+            count++;
         }
+
+        fileScanner.close();
     }
 
-    protected void outputResult()
+    public String toString()
     {
-        System.out.println(config);
+        StringBuilder builder = new StringBuilder();
 
         if(config.showShortOutput())
         {
-            PriorityQueue<Entry> history = evtHandler.getHistory();
-            while(!history.isEmpty())
+            PriorityQueue<Entry> tHistory = new PriorityQueue<>(history);
+
+            while(!tHistory.isEmpty())
             {
-                Entry entry = history.remove();
+                Entry entry = tHistory.remove();
 
                 double serviceTime = 0;
 
                 if(entry instanceof FinishEntry)
                 {
-                    serviceTime = ((FinishEntry)entry).serviceTime;
+                    serviceTime = ((FinishEntry)entry).getServiceTime();
                 }
 
-                System.out.println(entry.getKey() + "," + serviceTime + "," + entry.getCategory().id);
+                builder
+                        .append(entry.getKey()).append(',')
+                        .append(serviceTime).append(',')
+                        .append(entry.getCategory().id).append(System.lineSeparator());
             }
         }
 
-        System.out.println(categoryConfig);
+        return builder.toString();
     }
 
+    protected void pushToHistory(Entry entry)
+    {
+        if(config.showShortOutput())
+        {
+            history.add(entry);
+        }
+    }
+
+
+    public ProjectConfig config;
+    public List<CategoryConfig> categories;
+    private EventHandler evtHandler;
+    private PriorityQueue<Entry> history;
+    private int currentRun;
 
     public static void main(String[] args)
     {
         // Basic input parameter check
-        if(args.length == 0) throw new IllegalArgumentException("Invalid parameter");
+        if(args.length == 0)
+        {
+            throw new IllegalArgumentException("Invalid parameter");
+        }
 
-        String filePath = args[0];
+        try
+        {
+            // Instantiating simulation
+            Simulator sim = new Simulator(args[0]);
 
-        // Instantiating simulation
-        new Simulator(filePath);
+            while(sim.hasNext())
+            {
+                sim.nextRun();
+            }
+
+            System.out.print(sim);
+
+        }
+        catch(IOException e)
+        {
+            System.out.println("IOException " + e.getMessage());
+        }
     }
 }

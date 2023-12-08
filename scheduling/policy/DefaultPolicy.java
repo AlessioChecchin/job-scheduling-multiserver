@@ -1,8 +1,11 @@
-package scheduling;
+package scheduling.policy;
 
-import entries.ArrivalEntry;
-import entries.Entry;
-import entries.FinishEntry;
+import events.entries.ArrivalEntry;
+import events.entries.Entry;
+import events.entries.FinishEntry;
+
+import scheduling.Scheduler;
+import scheduling.Server;
 
 import java.util.List;
 
@@ -18,10 +21,9 @@ public class DefaultPolicy implements SchedulingPolicy
         }
         else if(entry instanceof FinishEntry)
         {
-            return serverList.get(((FinishEntry) entry).serverId);
+            return serverList.get(((FinishEntry) entry).getServerId());
         }
 
         return null;
     }
-
 }

@@ -1,20 +1,18 @@
 package scheduling;
 
 import config.CategoryConfig;
-import entries.*;
 
-import java.util.ArrayList;
+import events.EventHandler;
+import events.entries.ArrivalEntry;
+import events.entries.Entry;
+import events.entries.FinishEntry;
+import scheduling.policy.SchedulingPolicy;
+
 import java.util.List;
 
 public class Scheduler
 {
-    private final SchedulingPolicy policy;
-    private final EventHandler evtHandler;
-    private final List<Server> serverList;
-    private int arrivedJobs;
-    private int finishedJobs;
-
-    public Scheduler(List<Server> serverList,  EventHandler evtHandler, SchedulingPolicy policy)
+    public Scheduler(List<Server> serverList, EventHandler evtHandler, SchedulingPolicy policy)
     {
         arrivedJobs  = 0;
         finishedJobs = 0;
@@ -38,7 +36,7 @@ public class Scheduler
         {
             boolean immediateExecution = !target.isBusy();
 
-            // If the server wasn't busy the job starts executing immediately
+            // If the server isn't busy, the job starts executing immediately
             if(immediateExecution)
             {
                 CategoryConfig catConfig = entry.getCategory();
@@ -77,5 +75,11 @@ public class Scheduler
         return arrivedJobs;
     }
 
+
+    private final SchedulingPolicy policy;
+    private final EventHandler evtHandler;
+    private final List<Server> serverList;
+    private int arrivedJobs;
+    private int finishedJobs;
 
 }

@@ -1,15 +1,12 @@
 package scheduling;
 
-import entries.Entry;
+import events.entries.Entry;
 
 import java.util.LinkedList;
 import java.util.Queue;
 
 public class Server
 {
-    private final Queue<Entry> jobs;
-    private final int id;
-
     public Server(int id)
     {
         jobs = new LinkedList<>();
@@ -41,5 +38,6 @@ public class Server
         return id;
     }
 
-
+    private final Queue<Entry> jobs;
+    private final int id;
 }

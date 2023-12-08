@@ -1,23 +1,24 @@
-package entries;
+package events.entries;
 
 import config.CategoryConfig;
 
-public class Entry implements Comparable<Entry>, Categorizable
+public class Entry implements Comparable<Entry>
 {
-    private final double key;
-    private CategoryConfig category;
     public Entry(double key)
     {
         this.key = key;
     }
+
     public double getKey()
     {
         return key;
     }
+
     public void setCategory(CategoryConfig category)
     {
         this.category = category;
     }
+
     public CategoryConfig getCategory()
     {
         return category;
@@ -31,6 +32,9 @@ public class Entry implements Comparable<Entry>, Categorizable
 
     public String toString()
     {
-        return String.format("%s[key=%f][category=%s", getClass().getName(), key, category.toString());
+        return String.format("%s[key=%f][category=%s]", getClass().getName(), key, category.toString());
     }
+
+    private final double key;
+    private CategoryConfig category;
 }
