@@ -17,8 +17,16 @@ import java.util.PriorityQueue;
 import java.util.List;
 import java.util.Scanner;
 
+/**
+ * Class that implements a simulator.
+ */
 public class Simulator
 {
+    /**
+     * Simulator constructor.
+     * @param path The path of the entrypoint.
+     * @throws IOException If there are errors while reading input.
+     */
     public Simulator(String path) throws IOException
     {
         // Reading input from file
@@ -28,6 +36,34 @@ public class Simulator
         currentRun = 0;
     }
 
+    /**
+     * Executes the next iteration of the R simulations.
+     * @throws IllegalStateException If the simulation has already run R times.
+     */
+    public void nextRun() throws IllegalStateException
+    {
+        if(currentRun >= config.rSimulationRepetitions)
+        {
+            throw new IllegalStateException();
+        }
+
+        run();
+
+        currentRun++;
+    }
+
+    /**
+     * Checks if he can run the next time.
+     * @return If he can run the next time.
+     */
+    public boolean hasNext()
+    {
+        return currentRun < config.rSimulationRepetitions;
+    }
+
+    /**
+     * Runs the simulation 1 time.
+     */
     protected void run()
     {
         // Creating an event handler
@@ -77,23 +113,9 @@ public class Simulator
         config.addEta(currentEta);
     }
 
-    public void nextRun()
-    {
-        if(currentRun >= config.rSimulationRepetitions)
-        {
-            throw new IllegalStateException();
-        }
-
-        run();
-
-        currentRun++;
-    }
-
-    public boolean hasNext()
-    {
-        return currentRun < config.rSimulationRepetitions;
-    }
-
+    /**
+     * Initializes the initial jobs.
+     */
     protected void initializeJobs()
     {
         // Initializing jobs
@@ -104,6 +126,10 @@ public class Simulator
         }
     }
 
+    /**
+     * Creates the servers
+     * @return The list of created servers.
+     */
     protected List<Server> createServers()
     {
         List<Server> servers = new ArrayList<>();
@@ -117,6 +143,11 @@ public class Simulator
         return servers;
     }
 
+    /**
+     * Reads input from file.
+     * @param path The path of the input file.
+     * @throws IOException If there are errors while reading the file.
+     */
     protected void readInput(String path) throws IOException
     {
         Scanner fileScanner = new Scanner(new FileReader(path));
@@ -179,6 +210,7 @@ public class Simulator
 
     public String toString()
     {
+        // Using builder for performance.
         StringBuilder builder = new StringBuilder();
 
         builder
@@ -188,6 +220,7 @@ public class Simulator
                 .append(config.rSimulationRepetitions).append(',')
                 .append(config.pSchedulingPolicyType).append(System.lineSeparator());
 
+        // Check the type of output to use.
         if(config.hasShortOutput())
         {
             PriorityQueue<Entry> tHistory = new PriorityQueue<>(history);
@@ -209,6 +242,7 @@ public class Simulator
                         .append(entry.getCategory().id).append(System.lineSeparator());
             }
         }
+
         if(currentRun != 0)
         {
             builder
@@ -237,9 +271,8 @@ public class Simulator
         }
     }
 
-
-    public ProjectConfig config;
-    public List<CategoryConfig> categories;
+    private ProjectConfig config;
+    private List<CategoryConfig> categories;
     private EventHandler evtHandler;
     private PriorityQueue<Entry> history;
     private int currentRun;

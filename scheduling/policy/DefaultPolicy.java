@@ -9,6 +9,9 @@ import scheduling.Server;
 
 import java.util.List;
 
+/**
+ * Class that represents the default scheduling policy.
+ */
 public class DefaultPolicy implements SchedulingPolicy
 {
     public Server selectServer(Entry entry, Scheduler scheduler)
