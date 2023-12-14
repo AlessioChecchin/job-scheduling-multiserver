@@ -14,21 +14,25 @@ public class EventHandler
         entries = new PriorityQueue<>();
     }
 
-    public void generateArrivalEvent(CategoryConfig catConfig, double currentTime)
+    public ArrivalEntry generateArrivalEvent(CategoryConfig catConfig, double currentTime)
     {
-        Entry entry = new ArrivalEntry(currentTime + catConfig.arrivalGenerator.exponentialDistribution(catConfig.lambdaArrival));
+        ArrivalEntry entry = new ArrivalEntry(currentTime + catConfig.arrivalGenerator.exponentialDistribution(catConfig.lambdaArrival));
         entry.setCategory(catConfig);
 
         entries.add(entry);
+
+        return entry;
     }
 
-    public void generateFinishEvent(CategoryConfig catConfig, double currentTime, int serverId)
+    public FinishEntry generateFinishEvent(CategoryConfig catConfig, double currentTime, int serverId, ArrivalEntry linkedArrival)
     {
         double serviceTime = catConfig.serviceGenerator.exponentialDistribution(catConfig.lambdaService);
-        FinishEntry entry = new FinishEntry(currentTime + serviceTime, serverId, serviceTime);
+        FinishEntry entry = new FinishEntry(currentTime + serviceTime, serverId, serviceTime, linkedArrival);
 
         entry.setCategory(catConfig);
         entries.add(entry);
+
+        return entry;
     }
 
     public boolean hasEvent()

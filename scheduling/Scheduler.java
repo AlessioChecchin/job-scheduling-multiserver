@@ -41,7 +41,8 @@ public class Scheduler
             {
                 CategoryConfig catConfig = entry.getCategory();
 
-                evtHandler.generateFinishEvent(entry.getCategory(), entry.getKey(), target.getId());
+                evtHandler.generateFinishEvent(entry.getCategory(), entry.getKey(), target.getId(), (ArrivalEntry)entry)
+                        .getLinkedArrival().setStartExecution(entry.getKey());
             }
 
             target.enqueue(entry);
@@ -58,7 +59,8 @@ public class Scheduler
                 Entry currentJob = target.getCurrentJob();
 
                 // Generates end event for current job
-                evtHandler.generateFinishEvent(currentJob.getCategory(), entry.getKey(), target.getId());
+                evtHandler.generateFinishEvent(currentJob.getCategory(), entry.getKey(), target.getId(), (ArrivalEntry)currentJob)
+                        .getLinkedArrival().setStartExecution(entry.getKey());
             }
 
             finishedJobs++;

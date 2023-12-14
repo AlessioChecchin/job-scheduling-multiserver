@@ -34,6 +34,8 @@ public class Simulator
         // Creating a new scheduler.
         Scheduler scheduler = new Scheduler(createServers(), evtHandler, new DefaultPolicy());
 
+        double currentEta = 0;
+
         // Running until all jobs are finished
         while(evtHandler.hasEvent())
         {
@@ -46,16 +48,29 @@ public class Simulator
                     scheduler.schedule(entry);
 
                     pushToHistory(entry);
-
                 }
             }
-            else
+            else if(entry instanceof FinishEntry)
             {
                 scheduler.schedule(entry);
+
+                currentEta = entry.getKey();
+
+                ArrivalEntry origin = ((FinishEntry)entry).getLinkedArrival();
+
+                double delta = origin.getStartExecution() - origin.getKey();
+
+                // Adding queuing time for category-related stats
+                entry.getCategory().addCategoryStats(delta, ((FinishEntry) entry).getServiceTime());
+
+                // Adding queuing time for job-related stats
+                config.addQueuingTime(delta);
 
                 pushToHistory(entry);
             }
         }
+
+        config.addEta(currentEta);
     }
 
     public void nextRun()
@@ -162,6 +177,13 @@ public class Simulator
     {
         StringBuilder builder = new StringBuilder();
 
+        builder
+                .append(config.kServerNumber).append(',')
+                .append(config.hCategoriesNumber).append(',')
+                .append(config.nTotalJobs).append(',')
+                .append(config.rSimulationRepetitions).append(',')
+                .append(config.pSchedulingPolicyType).append(System.lineSeparator());
+
         if(config.showShortOutput())
         {
             PriorityQueue<Entry> tHistory = new PriorityQueue<>(history);
@@ -183,7 +205,23 @@ public class Simulator
                         .append(entry.getCategory().id).append(System.lineSeparator());
             }
         }
+        if(currentRun != 0)
+        {
+            builder
+                    .append(config.getAvgEta()).append(System.lineSeparator())
+                    .append(config.getAvgQueuingTime()).append(System.lineSeparator());
 
+            for(CategoryConfig catConfig: categories)
+            {
+                double avgNr = ((double)catConfig.getProcessedCategories()) / currentRun;
+
+                builder
+                        .append(avgNr).append(',')
+                        .append(catConfig.getAvgQueuingTime()).append(',')
+                        .append(catConfig.getAvgServiceTime()).append(System.lineSeparator());
+            }
+
+        }
         return builder.toString();
     }
 

@@ -7,8 +7,7 @@ public class ProjectConfig
     public final int nTotalJobs;
     public final int rSimulationRepetitions;
     public final int pSchedulingPolicyType;
-    private int processedCategories;
-    private double qtSum;
+
 
     public ProjectConfig(int kServerNumber, int hCategoriesNumber, int nTotalJobs, int rSimulationRepetitions, int pSchedulingPolicyType)
     {
@@ -18,8 +17,10 @@ public class ProjectConfig
         this.rSimulationRepetitions = rSimulationRepetitions;
         this.pSchedulingPolicyType = pSchedulingPolicyType;
 
-        this.processedCategories = 0;
+        this.eta = 0;
+        this.processedJobs = 0;
         this.qtSum = 0;
+        this.executedRuns = 0;
 
     }
 
@@ -34,5 +35,35 @@ public class ProjectConfig
         return pSchedulingPolicyType == 0 && rSimulationRepetitions == 1 && nTotalJobs <= 10;
     }
 
+    public void addEta(double eta)
+    {
+        this.eta += eta;
+        executedRuns++;
+    }
+
+    public double getAvgEta()
+    {
+        if(executedRuns == 0) throw new IllegalStateException();
+
+        return eta / executedRuns;
+    }
+
+    public void addQueuingTime(double time)
+    {
+        qtSum += time;
+        processedJobs++;
+    }
+
+    public double getAvgQueuingTime()
+    {
+        if(processedJobs == 0) throw new IllegalStateException();
+
+        return qtSum / processedJobs;
+    }
+
+    private double eta;
+    private int executedRuns;
+    private int processedJobs;
+    private double qtSum;
 
 }

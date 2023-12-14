@@ -6,4 +6,15 @@ public class ArrivalEntry extends Entry
     {
         super(key);
     }
+    public void setStartExecution(double time)
+    {
+        executionStart = time;
+    }
+
+    public double getStartExecution()
+    {
+        return executionStart;
+    }
+
+    private double executionStart;
 }
