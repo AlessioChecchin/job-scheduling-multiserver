@@ -11,7 +11,11 @@ import utils.RandomGenerator;
 
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.PriorityQueue;
+import java.util.List;
+import java.util.Scanner;
 
 public class Simulator
 {
@@ -184,7 +188,7 @@ public class Simulator
                 .append(config.rSimulationRepetitions).append(',')
                 .append(config.pSchedulingPolicyType).append(System.lineSeparator());
 
-        if(config.showShortOutput())
+        if(config.hasShortOutput())
         {
             PriorityQueue<Entry> tHistory = new PriorityQueue<>(history);
 
@@ -227,7 +231,7 @@ public class Simulator
 
     protected void pushToHistory(Entry entry)
     {
-        if(config.showShortOutput())
+        if(config.hasShortOutput())
         {
             history.add(entry);
         }

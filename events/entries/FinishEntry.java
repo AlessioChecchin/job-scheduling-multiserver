@@ -24,6 +24,7 @@ public class FinishEntry extends Entry
     {
         return arrivalEntry;
     }
+
     private final ArrivalEntry arrivalEntry;
     private final int serverId;
     private final double serviceTime;
