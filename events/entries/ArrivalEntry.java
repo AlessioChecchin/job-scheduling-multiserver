@@ -18,7 +18,7 @@ public class ArrivalEntry extends Entry
 
     /**
      * Setter for start execution time.
-     * @param time Start execution time.
+     * @param executionStart Start execution time.
      */
     public void setStartExecution(double executionStart)
     {
