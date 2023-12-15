@@ -16,7 +16,7 @@ public class Server
      */
     public Server(int id)
     {
-        jobs = new LinkedList<>();
+        this.jobs = new LinkedList<>();
         this.id = id;
     }
 
@@ -26,7 +26,7 @@ public class Server
      */
     public boolean isBusy()
     {
-        return !jobs.isEmpty();
+        return !this.jobs.isEmpty();
     }
 
     /**
@@ -35,7 +35,7 @@ public class Server
      */
     public void enqueue(Entry entry)
     {
-        jobs.add(entry);
+        this.jobs.add(entry);
     }
 
     /**
@@ -44,7 +44,7 @@ public class Server
      */
     public Entry remove()
     {
-        return jobs.remove();
+        return this.jobs.remove();
     }
 
     /**
@@ -53,7 +53,7 @@ public class Server
      */
     public Entry getCurrentJob()
     {
-        return jobs.element();
+        return this.jobs.element();
     }
 
     /**
@@ -62,7 +62,7 @@ public class Server
      */
     public int getId()
     {
-        return id;
+        return this.id;
     }
 
     private final Queue<Entry> jobs;

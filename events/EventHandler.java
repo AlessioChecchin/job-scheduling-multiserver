@@ -1,6 +1,6 @@
 package events;
 
-import config.CategoryConfig;
+import config.Category;
 
 import events.entries.ArrivalEntry;
 import events.entries.Entry;
@@ -28,9 +28,9 @@ public class EventHandler
      * @param currentTime Current time.
      * @return The generated arrival event.
      */
-    public ArrivalEntry generateArrivalEvent(CategoryConfig catConfig, double currentTime)
+    public ArrivalEntry generateArrivalEvent(Category catConfig, double currentTime)
     {
-        ArrivalEntry entry = new ArrivalEntry(currentTime + catConfig.arrivalGenerator.exponentialDistribution(catConfig.lambdaArrival));
+        ArrivalEntry entry = new ArrivalEntry(currentTime + catConfig.getArrivalGenerator().exponentialDistribution(catConfig.getLambdaArrival()));
         entry.setCategory(catConfig);
 
         entries.add(entry);
@@ -46,9 +46,9 @@ public class EventHandler
      * @param linkedArrival The arrival entry linked to the same job.
      * @return The generated finish event.
      */
-    public FinishEntry generateFinishEvent(CategoryConfig catConfig, double currentTime, int serverId, ArrivalEntry linkedArrival)
+    public FinishEntry generateFinishEvent(Category catConfig, double currentTime, int serverId, ArrivalEntry linkedArrival)
     {
-        double serviceTime = catConfig.serviceGenerator.exponentialDistribution(catConfig.lambdaService);
+        double serviceTime = catConfig.getServiceGenerator().exponentialDistribution(catConfig.getLambdaService());
         FinishEntry entry = new FinishEntry(currentTime + serviceTime, serverId, serviceTime, linkedArrival);
 
         entry.setCategory(catConfig);
@@ -59,7 +59,7 @@ public class EventHandler
 
     /**
      * Checks if there are pending events.
-     * @return If theere are pending events.
+     * @return If there are pending events.
      */
     public boolean hasEvent()
     {

@@ -1,35 +1,13 @@
 package config;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 /**
  * This class represents the configuration of the project.
  */
 public class ProjectConfig
 {
-    /**
-     * The number of servers of the simulation.
-     */
-    public final int kServerNumber;
-
-    /**
-     * The number of categories.
-     */
-    public final int hCategoriesNumber;
-
-    /**
-     * The number of jobs to simulate.
-     */
-    public final int nTotalJobs;
-
-    /**
-     * The number of repetitions of the simulation.
-     */
-    public final int rSimulationRepetitions;
-
-    /**
-     * The scheduling policy to use.
-     */
-    public final int pSchedulingPolicyType;
-
     /**
      * Configuration constructor.
      * @param kServerNumber The number of servers of the simulation.
@@ -45,11 +23,9 @@ public class ProjectConfig
         this.nTotalJobs = nTotalJobs;
         this.rSimulationRepetitions = rSimulationRepetitions;
         this.pSchedulingPolicyType = pSchedulingPolicyType;
+        this.categoryStats = new ArrayList<>(Arrays.asList(new CategoryStats[this.hCategoriesNumber]));
 
-        eta = 0;
-        processedJobs = 0;
-        qtSum = 0;
-        executedRuns = 0;
+        this.clearStats();
     }
 
     /**
@@ -61,14 +37,36 @@ public class ProjectConfig
         return pSchedulingPolicyType == 0 && rSimulationRepetitions == 1 && nTotalJobs <= 10;
     }
 
-    /**
-     * Adds an end time of a run A
-     * @param eta End time of a run
-     */
-    public void addEta(double eta)
+    public void addEndTime(double eta)
     {
         this.eta += eta;
-        executedRuns++;
+        this.nRun++;
+    }
+
+    public void addJobQueuingTime(double qt)
+    {
+        this.jobAqt += qt;
+        this.processedJobs++;
+    }
+
+    public void addCategoryStats(int categoryId, double aqt, double ast, int processedEntities) throws ArrayIndexOutOfBoundsException
+    {
+        CategoryStats stat = this.categoryStats.get(categoryId);
+        stat.avgQueuingTimeSum += aqt;
+        stat.avgServiceTimeSum += ast;
+        stat.processedEntities += processedEntities;
+        stat.n++;
+    }
+
+    public void clearStats()
+    {
+        this.eta = 0;
+        this.jobAqt = 0;
+        this.processedJobs = 0;
+        this.nRun = 0;
+
+        for(int i = 0; i < hCategoriesNumber; i++)
+            categoryStats.set(i, new CategoryStats());
     }
 
     /**
@@ -77,19 +75,9 @@ public class ProjectConfig
      */
     public double getAvgEta()
     {
-        if(executedRuns == 0) throw new IllegalStateException();
+        if(this.nRun == 0) throw new IllegalStateException();
 
-        return eta / executedRuns;
-    }
-
-    /**
-     * Adds a queuing time of a job (general category).
-     * @param time Queuing time.
-     */
-    public void addQueuingTime(double time)
-    {
-        qtSum += time;
-        processedJobs++;
+        return this.eta / this.nRun;
     }
 
     /**
@@ -100,18 +88,106 @@ public class ProjectConfig
     {
         if(processedJobs == 0) throw new IllegalStateException();
 
-        return qtSum / processedJobs;
+        return jobAqt / processedJobs;
+    }
+
+    public double getAvgCategoryQueuingTime(int categoryId)
+    {
+        CategoryStats stats = categoryStats.get(categoryId);
+        if(stats.n == 0) throw new IllegalStateException();
+        return stats.avgQueuingTimeSum / stats.n;
+    }
+
+    public double getAvgCategoryServiceTime(int categoryId)
+    {
+        CategoryStats stats = categoryStats.get(categoryId);
+        if(stats.n == 0) throw new IllegalStateException();
+        return stats.avgServiceTimeSum / stats.n;
+    }
+
+    public double getAvgCategoryNumber(int categoryId)
+    {
+        CategoryStats stats = categoryStats.get(categoryId);
+        if(stats.n == 0) throw new IllegalStateException();
+        return ((double)stats.processedEntities) / stats.n;
     }
 
     public String toString()
     {
-        return String.format("%s[kServerNumber=%d, hCategoriesNumber=%d, nTotalJobs=%d, rSimulationRepetitions=%d, pSchedulingPolicyType=%d, qtSum=%f]",
-                getClass().getName(), kServerNumber, hCategoriesNumber, nTotalJobs, rSimulationRepetitions, pSchedulingPolicyType, qtSum);
+        return String.format("%s[kServerNumber=%d, hCategoriesNumber=%d, nTotalJobs=%d, rSimulationRepetitions=%d, pSchedulingPolicyType=%d]",
+                getClass().getName(), kServerNumber, hCategoriesNumber, nTotalJobs, rSimulationRepetitions, pSchedulingPolicyType);
     }
 
-    private double eta;
-    private int executedRuns;
-    private int processedJobs;
-    private double qtSum;
+    public int getSimulationRepetitions()
+    {
+        return this.rSimulationRepetitions;
+    }
 
+    public int getCategoriesNumber()
+    {
+        return this.hCategoriesNumber;
+    }
+
+    public int getServerNumber()
+    {
+        return this.kServerNumber;
+    }
+
+    public int getTotalJobs()
+    {
+        return this.nTotalJobs;
+    }
+
+    public int getSchedulingPolicy()
+    {
+        return this.pSchedulingPolicyType;
+    }
+
+    /**
+     * The number of servers of the simulation.
+     */
+    private final int kServerNumber;
+
+    /**
+     * The number of categories.
+     */
+    private final int hCategoriesNumber;
+
+    /**
+     * The number of jobs to simulate.
+     */
+    private final int nTotalJobs;
+
+    /**
+     * The number of repetitions of the simulation.
+     */
+    private final int rSimulationRepetitions;
+
+    /**
+     * The scheduling policy to use.
+     */
+    private final int pSchedulingPolicyType;
+
+    private double eta;
+    private int processedJobs;
+    private int nRun;
+    private double jobAqt;
+
+    private final ArrayList<CategoryStats> categoryStats;
+
+    private static class CategoryStats
+    {
+        public double avgQueuingTimeSum;
+        public double avgServiceTimeSum;
+        public int processedEntities;
+        public int n;
+
+        public CategoryStats()
+        {
+            this.avgQueuingTimeSum = 0;
+            this.avgServiceTimeSum = 0;
+            this.processedEntities = 0;
+            this.n = 0;
+        }
+    }
 }

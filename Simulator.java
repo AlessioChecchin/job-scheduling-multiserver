@@ -1,4 +1,4 @@
-import config.CategoryConfig;
+import config.Category;
 import config.ProjectConfig;
 import events.*;
 import events.entries.ArrivalEntry;
@@ -32,8 +32,8 @@ public class Simulator
         // Reading input from file
         readInput(path);
 
-        history = new PriorityQueue<>();
-        currentRun = 0;
+        this.history = new PriorityQueue<>();
+        this.currentRun = 0;
     }
 
     /**
@@ -42,14 +42,17 @@ public class Simulator
      */
     public void nextRun() throws IllegalStateException
     {
-        if(currentRun >= config.rSimulationRepetitions)
+        if(!this.hasNext()) throw new IllegalStateException();
+
+        this.run();
+
+        for(Category category: categories)
         {
-            throw new IllegalStateException();
+            config.addCategoryStats(category.getId(), category.getAvgQueuingTime(), category.getAvgServiceTime(), category.getProcessedCategories());
+            category.clearStats();
         }
 
-        run();
-
-        currentRun++;
+        this.currentRun++;
     }
 
     /**
@@ -58,7 +61,7 @@ public class Simulator
      */
     public boolean hasNext()
     {
-        return currentRun < config.rSimulationRepetitions;
+        return this.currentRun < this.config.getSimulationRepetitions();
     }
 
     /**
@@ -67,50 +70,51 @@ public class Simulator
     protected void run()
     {
         // Creating an event handler
-        evtHandler = new EventHandler();
+        this.evtHandler = new EventHandler();
 
-        initializeJobs();
+        this.initializeJobs();
 
         // Creating a new scheduler.
-        Scheduler scheduler = new Scheduler(createServers(), evtHandler, new DefaultPolicy());
+        Scheduler scheduler = new Scheduler(this.createServers(), this.evtHandler, new DefaultPolicy());
 
         double currentEta = 0;
 
         // Running until all jobs are finished
-        while(evtHandler.hasEvent())
+        while(this.evtHandler.hasEvent())
         {
-            Entry entry = evtHandler.remove();
+            Entry entry = this.evtHandler.remove();
             if(entry instanceof ArrivalEntry)
             {
-                if(scheduler.getArrivedJobs() < config.nTotalJobs)
+                if(scheduler.getArrivedJobs() < this.config.getTotalJobs())
                 {
-                    evtHandler.generateArrivalEvent(entry.getCategory(), entry.getKey());
+                    this.evtHandler.generateArrivalEvent(entry.getCategory(), entry.getKey());
                     scheduler.schedule(entry);
 
-                    pushToHistory(entry);
+                    this.pushToHistory(entry);
                 }
             }
             else if(entry instanceof FinishEntry)
             {
                 scheduler.schedule(entry);
 
-                currentEta = entry.getKey();
+                FinishEntry finishEntry = (FinishEntry) entry;
 
-                ArrivalEntry origin = ((FinishEntry)entry).getLinkedArrival();
+                currentEta = finishEntry.getKey();
 
+                ArrivalEntry origin = finishEntry.getLinkedArrival();
                 double delta = origin.getStartExecution() - origin.getKey();
 
                 // Adding queuing time for category-related stats
-                entry.getCategory().addCategoryStats(delta, ((FinishEntry) entry).getServiceTime());
+                entry.getCategory().addStats(delta, finishEntry.getServiceTime());
 
                 // Adding queuing time for job-related stats
-                config.addQueuingTime(delta);
+                config.addJobQueuingTime(delta);
 
                 pushToHistory(entry);
             }
         }
 
-        config.addEta(currentEta);
+        config.addEndTime(currentEta);
     }
 
     /**
@@ -119,9 +123,9 @@ public class Simulator
     protected void initializeJobs()
     {
         // Initializing jobs
-        for(int i = 0; i < config.hCategoriesNumber; i++)
+        for(int i = 0; i < config.getCategoriesNumber(); i++)
         {
-            CategoryConfig catConfig = categories.get(i);
+            Category catConfig = categories.get(i);
             evtHandler.generateArrivalEvent(catConfig, 0);
         }
     }
@@ -135,7 +139,7 @@ public class Simulator
         List<Server> servers = new ArrayList<>();
 
         // Creating K servers.
-        for(int i = 0; i < config.kServerNumber; i++)
+        for(int i = 0; i < config.getServerNumber(); i++)
         {
             servers.add(new Server(i));
         }
@@ -176,7 +180,7 @@ public class Simulator
         categories = new ArrayList<>();
 
         int count = 0;
-        while (fileScanner.hasNextLine() && count < config.hCategoriesNumber)
+        while (fileScanner.hasNextLine() && count < config.getCategoriesNumber())
         {
             Scanner paramScanner = new Scanner((fileScanner.nextLine()));
             paramScanner.useDelimiter(",");
@@ -188,7 +192,7 @@ public class Simulator
             RandomGenerator arrivalGenerator = new RandomGenerator(seedArrival);
             RandomGenerator serviceGenerator = new RandomGenerator(seedService);
 
-            CategoryConfig catConfig = new CategoryConfig(
+            Category catConfig = new Category(
                     count,
                     lambdaArrival,
                     lambdaService,
@@ -214,11 +218,11 @@ public class Simulator
         StringBuilder builder = new StringBuilder();
 
         builder
-                .append(config.kServerNumber).append(',')
-                .append(config.hCategoriesNumber).append(',')
-                .append(config.nTotalJobs).append(',')
-                .append(config.rSimulationRepetitions).append(',')
-                .append(config.pSchedulingPolicyType).append(System.lineSeparator());
+                .append(config.getServerNumber()).append(',')
+                .append(config.getCategoriesNumber()).append(',')
+                .append(config.getTotalJobs()).append(',')
+                .append(config.getSimulationRepetitions()).append(',')
+                .append(config.getSchedulingPolicy()).append(System.lineSeparator());
 
         // Check the type of output to use.
         if(config.hasShortOutput())
@@ -239,7 +243,7 @@ public class Simulator
                 builder
                         .append(entry.getKey()).append(',')
                         .append(serviceTime).append(',')
-                        .append(entry.getCategory().id).append(System.lineSeparator());
+                        .append(entry.getCategory().getId()).append(System.lineSeparator());
             }
         }
 
@@ -249,14 +253,14 @@ public class Simulator
                     .append(config.getAvgEta()).append(System.lineSeparator())
                     .append(config.getAvgQueuingTime()).append(System.lineSeparator());
 
-            for(CategoryConfig catConfig: categories)
+            for(Category catConfig: categories)
             {
-                double avgNr = ((double)catConfig.getProcessedCategories()) / currentRun;
+                int id = catConfig.getId();
 
                 builder
-                        .append(avgNr).append(',')
-                        .append(catConfig.getAvgQueuingTime()).append(',')
-                        .append(catConfig.getAvgServiceTime()).append(System.lineSeparator());
+                        .append(config.getAvgCategoryNumber(id)).append(',')
+                        .append(config.getAvgCategoryQueuingTime(id)).append(',')
+                        .append(config.getAvgCategoryServiceTime(id)).append(System.lineSeparator());
             }
 
         }
@@ -272,7 +276,7 @@ public class Simulator
     }
 
     private ProjectConfig config;
-    private List<CategoryConfig> categories;
+    private List<Category> categories;
     private EventHandler evtHandler;
     private PriorityQueue<Entry> history;
     private int currentRun;
@@ -280,10 +284,7 @@ public class Simulator
     public static void main(String[] args)
     {
         // Basic input parameter check
-        if(args.length == 0)
-        {
-            throw new IllegalArgumentException("Invalid parameter");
-        }
+        if(args.length == 0) throw new IllegalArgumentException("Invalid parameter");
 
         try
         {

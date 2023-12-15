@@ -23,12 +23,12 @@ public class Scheduler
      */
     public Scheduler(List<Server> serverList, EventHandler evtHandler, SchedulingPolicy policy)
     {
-        arrivedJobs  = 0;
-        finishedJobs = 0;
-
         this.serverList = serverList;
         this.evtHandler = evtHandler;
         this.policy = policy;
+
+        this.arrivedJobs  = 0;
+        this.finishedJobs = 0;
     }
 
     /**
@@ -37,7 +37,7 @@ public class Scheduler
      */
     public List<Server> getServers()
     {
-        return serverList;
+        return this.serverList;
     }
 
     /**
@@ -47,7 +47,7 @@ public class Scheduler
     public void schedule(Entry entry)
     {
         // Obtaining server target based on current target and scheduler state.
-        Server target = policy.selectServer(entry, this);
+        Server target = this.policy.selectServer(entry, this);
 
         if(entry instanceof ArrivalEntry)
         {
@@ -56,12 +56,12 @@ public class Scheduler
             // If the server isn't busy, the job starts executing immediately
             if(immediateExecution)
             {
-                evtHandler.generateFinishEvent(entry.getCategory(), entry.getKey(), target.getId(), (ArrivalEntry)entry)
+                this.evtHandler.generateFinishEvent(entry.getCategory(), entry.getKey(), target.getId(), (ArrivalEntry)entry)
                         .getLinkedArrival().setStartExecution(entry.getKey());
             }
 
             target.enqueue(entry);
-            arrivedJobs++;
+            this.arrivedJobs++;
         }
         else if(entry instanceof FinishEntry)
         {
@@ -74,11 +74,11 @@ public class Scheduler
                 Entry currentJob = target.getCurrentJob();
 
                 // Generates end event for current job
-                evtHandler.generateFinishEvent(currentJob.getCategory(), entry.getKey(), target.getId(), (ArrivalEntry)currentJob)
+                this.evtHandler.generateFinishEvent(currentJob.getCategory(), entry.getKey(), target.getId(), (ArrivalEntry)currentJob)
                         .getLinkedArrival().setStartExecution(entry.getKey());
             }
 
-            finishedJobs++;
+            this.finishedJobs++;
         }
     }
 
@@ -88,7 +88,7 @@ public class Scheduler
      */
     public int getFinishedJobs()
     {
-        return finishedJobs;
+        return this.finishedJobs;
     }
 
     /**
@@ -97,7 +97,7 @@ public class Scheduler
      */
     public int getArrivedJobs()
     {
-        return arrivedJobs;
+        return this.arrivedJobs;
     }
 
     private final SchedulingPolicy policy;

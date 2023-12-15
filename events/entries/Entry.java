@@ -1,6 +1,6 @@
 package events.entries;
 
-import config.CategoryConfig;
+import config.Category;
 
 public class Entry implements Comparable<Entry>
 {
@@ -14,12 +14,12 @@ public class Entry implements Comparable<Entry>
         return key;
     }
 
-    public void setCategory(CategoryConfig category)
+    public void setCategory(Category category)
     {
         this.category = category;
     }
 
-    public CategoryConfig getCategory()
+    public Category getCategory()
     {
         return category;
     }
@@ -36,5 +36,5 @@ public class Entry implements Comparable<Entry>
     }
 
     private final double key;
-    private CategoryConfig category;
+    private Category category;
 }
