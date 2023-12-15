@@ -65,6 +65,13 @@ public class Server
         return this.id;
     }
 
+    /**
+     * Jobs to execute.
+     */
     private final Queue<Entry> jobs;
+
+    /**
+     * Id of the server.
+     */
     private final int id;
 }

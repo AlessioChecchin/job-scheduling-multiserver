@@ -1,20 +1,24 @@
 import config.Category;
 import config.ProjectConfig;
-import events.*;
+
+import events.EventHandler;
 import events.entries.ArrivalEntry;
 import events.entries.Entry;
 import events.entries.FinishEntry;
+
 import scheduling.policy.DefaultPolicy;
 import scheduling.Scheduler;
 import scheduling.Server;
+
 import utils.RandomGenerator;
 
 import java.io.FileReader;
 import java.io.IOException;
 
 import java.util.ArrayList;
-import java.util.PriorityQueue;
+import java.util.Arrays;
 import java.util.List;
+import java.util.PriorityQueue;
 import java.util.Scanner;
 
 /**
@@ -46,6 +50,7 @@ public class Simulator
 
         this.run();
 
+        // Adding stats to the project and cleaning each category stats.
         for(Category category: categories)
         {
             config.addCategoryStats(category.getId(), category.getAvgQueuingTime(), category.getAvgServiceTime(), category.getProcessedCategories());
@@ -65,13 +70,14 @@ public class Simulator
     }
 
     /**
-     * Runs the simulation 1 time.
+     * Runs 1 of R simulations.
      */
     protected void run()
     {
         // Creating an event handler
         this.evtHandler = new EventHandler();
 
+        // Initializing jobs.
         this.initializeJobs();
 
         // Creating a new scheduler.
@@ -85,6 +91,7 @@ public class Simulator
             Entry entry = this.evtHandler.remove();
             if(entry instanceof ArrivalEntry)
             {
+                // If we already reached the total number of jobs to handle we just ignore the event.
                 if(scheduler.getArrivedJobs() < this.config.getTotalJobs())
                 {
                     this.evtHandler.generateArrivalEvent(entry.getCategory(), entry.getKey());
@@ -95,6 +102,9 @@ public class Simulator
             }
             else if(entry instanceof FinishEntry)
             {
+                // Each Finish event must be handled.
+
+                // Scheduling the finish event
                 scheduler.schedule(entry);
 
                 FinishEntry finishEntry = (FinishEntry) entry;
@@ -136,12 +146,12 @@ public class Simulator
      */
     protected List<Server> createServers()
     {
-        List<Server> servers = new ArrayList<>();
+        List<Server> servers = new ArrayList<>(Arrays.asList(new Server[config.getServerNumber()]));
 
         // Creating K servers.
         for(int i = 0; i < config.getServerNumber(); i++)
         {
-            servers.add(new Server(i));
+            servers.set(i, new Server(i));
         }
 
         return servers;
@@ -156,10 +166,12 @@ public class Simulator
     {
         Scanner fileScanner = new Scanner(new FileReader(path));
 
-        if(fileScanner.hasNextLine()) {
+        if(fileScanner.hasNextLine())
+        {
             Scanner metaScanner = new Scanner(fileScanner.nextLine());
             metaScanner.useDelimiter(",");
 
+            // Reading config.
             int kServerNumber          = Integer.parseInt(metaScanner.next());
             int hCategoriesNumber      = Integer.parseInt(metaScanner.next());
             int nTotalJobs             = Integer.parseInt(metaScanner.next());
@@ -177,10 +189,12 @@ public class Simulator
             metaScanner.close();
         }
 
-        categories = new ArrayList<>();
+        categories = new ArrayList<>(Arrays.asList(new Category[config.getCategoriesNumber()]));
 
-        int count = 0;
-        while (fileScanner.hasNextLine() && count < config.getCategoriesNumber())
+        int i = 0;
+
+        // Reading categories.
+        while (fileScanner.hasNextLine() && i < config.getCategoriesNumber())
         {
             Scanner paramScanner = new Scanner((fileScanner.nextLine()));
             paramScanner.useDelimiter(",");
@@ -193,7 +207,7 @@ public class Simulator
             RandomGenerator serviceGenerator = new RandomGenerator(seedService);
 
             Category catConfig = new Category(
-                    count,
+                    i,
                     lambdaArrival,
                     lambdaService,
                     seedArrival,
@@ -202,11 +216,11 @@ public class Simulator
                     serviceGenerator
             );
 
-            categories.add(catConfig);
+            categories.set(i, catConfig);
 
             paramScanner.close();
 
-            count++;
+            i++;
         }
 
         fileScanner.close();
@@ -217,6 +231,7 @@ public class Simulator
         // Using builder for performance.
         StringBuilder builder = new StringBuilder();
 
+        // Showing input data.
         builder
                 .append(config.getServerNumber()).append(',')
                 .append(config.getCategoriesNumber()).append(',')
@@ -267,6 +282,10 @@ public class Simulator
         return builder.toString();
     }
 
+    /**
+     * Pushes an entry to history.
+     * @param entry The entry to push.
+     */
     protected void pushToHistory(Entry entry)
     {
         if(config.hasShortOutput())
@@ -275,10 +294,30 @@ public class Simulator
         }
     }
 
+    /**
+     * Project configuration class
+     */
     private ProjectConfig config;
+
+    /**
+     * Array of job categories.
+     */
     private List<Category> categories;
+
+    /**
+     * Event handler.
+     */
     private EventHandler evtHandler;
+
+    /**
+     * History is useful to track the state of some simulations.
+     * In all other cases this array remains empty.
+     */
     private PriorityQueue<Entry> history;
+
+    /**
+     * Index of the current run.
+     */
     private int currentRun;
 
     public static void main(String[] args)

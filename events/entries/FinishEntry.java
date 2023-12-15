@@ -14,7 +14,7 @@ public class FinishEntry extends Entry
      */
     public FinishEntry(double key, int serverId, double serviceTime, ArrivalEntry arrivalEntry)
     {
-        super(key);
+        super(key, arrivalEntry.getCategory());
         this.serverId = serverId;
         this.serviceTime = serviceTime;
         this.arrivalEntry = arrivalEntry;
@@ -26,7 +26,7 @@ public class FinishEntry extends Entry
      */
     public int getServerId()
     {
-        return serverId;
+        return this.serverId;
     }
 
     /**
@@ -35,7 +35,7 @@ public class FinishEntry extends Entry
      */
     public double getServiceTime()
     {
-        return serviceTime;
+        return this.serviceTime;
     }
 
     /**
@@ -44,11 +44,22 @@ public class FinishEntry extends Entry
      */
     public ArrivalEntry getLinkedArrival()
     {
-        return arrivalEntry;
+        return this.arrivalEntry;
     }
 
+    /**
+     * Linked arrival entry.
+     */
     private final ArrivalEntry arrivalEntry;
+
+    /**
+     * The server that processed the job associated with the entry.
+     */
     private final int serverId;
+
+    /**
+     * The service time of the job associated with the entry.
+     */
     private final double serviceTime;
 
 }

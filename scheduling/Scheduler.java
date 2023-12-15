@@ -56,7 +56,7 @@ public class Scheduler
             // If the server isn't busy, the job starts executing immediately
             if(immediateExecution)
             {
-                this.evtHandler.generateFinishEvent(entry.getCategory(), entry.getKey(), target.getId(), (ArrivalEntry)entry)
+                this.evtHandler.generateFinishEvent((ArrivalEntry)entry, entry.getKey(), target.getId())
                         .getLinkedArrival().setStartExecution(entry.getKey());
             }
 
@@ -74,7 +74,7 @@ public class Scheduler
                 Entry currentJob = target.getCurrentJob();
 
                 // Generates end event for current job
-                this.evtHandler.generateFinishEvent(currentJob.getCategory(), entry.getKey(), target.getId(), (ArrivalEntry)currentJob)
+                this.evtHandler.generateFinishEvent((ArrivalEntry)currentJob, entry.getKey(), target.getId())
                         .getLinkedArrival().setStartExecution(entry.getKey());
             }
 
@@ -100,9 +100,28 @@ public class Scheduler
         return this.arrivedJobs;
     }
 
+    /**
+     * Policy used to select the target server.
+     */
     private final SchedulingPolicy policy;
+
+    /**
+     * Event handler.
+     */
     private final EventHandler evtHandler;
+
+    /**
+     * Server list.
+     */
     private final List<Server> serverList;
+
+    /**
+     * Number of jobs arrived.
+     */
     private int arrivedJobs;
+
+    /**
+     * Number of finished jobs.
+     */
     private int finishedJobs;
 }

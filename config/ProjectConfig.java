@@ -34,21 +34,37 @@ public class ProjectConfig
      */
     public boolean hasShortOutput()
     {
-        return pSchedulingPolicyType == 0 && rSimulationRepetitions == 1 && nTotalJobs <= 10;
+        return this.pSchedulingPolicyType == 0 && this.rSimulationRepetitions == 1 && this.nTotalJobs <= 10;
     }
 
+    /**
+     * Adds an end of time for a specific run.
+     * @param eta The end of time for the current run.
+     */
     public void addEndTime(double eta)
     {
         this.eta += eta;
         this.nRun++;
     }
 
+    /**
+     * Adds the queuing time of a generic job.
+     * @param qt Queuing time.
+     */
     public void addJobQueuingTime(double qt)
     {
         this.jobAqt += qt;
         this.processedJobs++;
     }
 
+    /**
+     * Adds the stats of a category after a generic run.
+     * @param categoryId The id of the category.
+     * @param aqt Average queuing time of the category during the last run.
+     * @param ast Average service time of the category during the run.
+     * @param processedEntities Number of categories processed during the last run.
+     * @throws ArrayIndexOutOfBoundsException If the category id is not valid.
+     */
     public void addCategoryStats(int categoryId, double aqt, double ast, int processedEntities) throws ArrayIndexOutOfBoundsException
     {
         CategoryStats stat = this.categoryStats.get(categoryId);
@@ -58,6 +74,9 @@ public class ProjectConfig
         stat.n++;
     }
 
+    /**
+     * Clears the stats.
+     */
     public void clearStats()
     {
         this.eta = 0;
@@ -65,8 +84,10 @@ public class ProjectConfig
         this.processedJobs = 0;
         this.nRun = 0;
 
-        for(int i = 0; i < hCategoriesNumber; i++)
-            categoryStats.set(i, new CategoryStats());
+        for(int i = 0; i < this.hCategoriesNumber; i++)
+        {
+            this.categoryStats.set(i, new CategoryStats());
+        }
     }
 
     /**
@@ -86,58 +107,97 @@ public class ProjectConfig
      */
     public double getAvgQueuingTime()
     {
-        if(processedJobs == 0) throw new IllegalStateException();
+        if(this.processedJobs == 0) throw new IllegalStateException();
 
-        return jobAqt / processedJobs;
+        return this.jobAqt / this.processedJobs;
     }
 
+    /**
+     * Average over R runs of the average queuing time.
+     * @param categoryId The category to query.
+     * @return The average of the average queuing time.
+     */
     public double getAvgCategoryQueuingTime(int categoryId)
     {
-        CategoryStats stats = categoryStats.get(categoryId);
+        CategoryStats stats = this.categoryStats.get(categoryId);
         if(stats.n == 0) throw new IllegalStateException();
         return stats.avgQueuingTimeSum / stats.n;
     }
 
+    /**
+     * Average over R runs of the average service time.
+     * @param categoryId The category to query.
+     * @return The average of the average service time.
+     */
     public double getAvgCategoryServiceTime(int categoryId)
     {
-        CategoryStats stats = categoryStats.get(categoryId);
+        CategoryStats stats = this.categoryStats.get(categoryId);
         if(stats.n == 0) throw new IllegalStateException();
         return stats.avgServiceTimeSum / stats.n;
     }
 
+    /**
+     * Average over R runs of the number of categories processed.
+     * @param categoryId The category to query.
+     * @return The average processed categories.
+     */
     public double getAvgCategoryNumber(int categoryId)
     {
-        CategoryStats stats = categoryStats.get(categoryId);
+        CategoryStats stats = this.categoryStats.get(categoryId);
         if(stats.n == 0) throw new IllegalStateException();
         return ((double)stats.processedEntities) / stats.n;
     }
 
+    /**
+     * To string method.
+     * @return A string representation of the object.
+     */
     public String toString()
     {
         return String.format("%s[kServerNumber=%d, hCategoriesNumber=%d, nTotalJobs=%d, rSimulationRepetitions=%d, pSchedulingPolicyType=%d]",
-                getClass().getName(), kServerNumber, hCategoriesNumber, nTotalJobs, rSimulationRepetitions, pSchedulingPolicyType);
+                getClass().getName(), this.kServerNumber, this.hCategoriesNumber, this.nTotalJobs, this.rSimulationRepetitions, this.pSchedulingPolicyType);
     }
 
+    /**
+     * Getter for the number of repetitions of the simulation.
+     * @return The number of repetitions.
+     */
     public int getSimulationRepetitions()
     {
         return this.rSimulationRepetitions;
     }
 
+    /**
+     * Getter for the number of categories.
+     * @return The number of categories.
+     */
     public int getCategoriesNumber()
     {
         return this.hCategoriesNumber;
     }
 
+    /**
+     * Getter for the number of servers.
+     * @return The number of servers.
+     */
     public int getServerNumber()
     {
         return this.kServerNumber;
     }
 
+    /**
+     * Getter for the number of jobs processed over the entire simulation (R runs).
+     * @return The number of jobs.
+     */
     public int getTotalJobs()
     {
         return this.nTotalJobs;
     }
 
+    /**
+     * Getter for the scheduling policy type.
+     * @return The scheduling policy type.
+     */
     public int getSchedulingPolicy()
     {
         return this.pSchedulingPolicyType;
@@ -168,13 +228,34 @@ public class ProjectConfig
      */
     private final int pSchedulingPolicyType;
 
+    /**
+     * Sum of end of times over R runs.
+     */
     private double eta;
+
+    /**
+     * Number of processed jobs.
+     */
     private int processedJobs;
+
+    /**
+     * Current run.
+     */
     private int nRun;
+
+    /**
+     * Average queuing time of jobs over R runs.
+     */
     private double jobAqt;
 
+    /**
+     * Array of category statistics.
+     */
     private final ArrayList<CategoryStats> categoryStats;
 
+    /**
+     * Class that represents statistic of a specific category, over R runs.
+     */
     private static class CategoryStats
     {
         public double avgQueuingTimeSum;

@@ -2,7 +2,6 @@ package config;
 
 import utils.RandomGenerator;
 
-import java.util.Random;
 
 /**
  * This class represents a category.
@@ -46,6 +45,9 @@ public class Category
         this.processedCategories++;
     }
 
+    /**
+     * Clears the stats for the current category.
+     */
     public void clearStats()
     {
         this.queuingTimeSum = 0;
@@ -82,42 +84,74 @@ public class Category
         return this.serviceTimeSum / this.processedCategories;
     }
 
+    /**
+     * To string method.
+     * @return A string representation of the object.
+     */
     public String toString()
     {
         return String.format("%s[id=%d, lambdaArrival=%f, lambdaService=%f, seedArrival=%d, seedService=%d]",
                 getClass().getName(), this.id, this.lambdaArrival, this.lambdaService, this.seedArrival, this.seedService);
     }
 
+    /**
+     * Lambda arrival getter.
+     * @return Lambda arrival.
+     */
     public double getLambdaArrival()
     {
         return this.lambdaArrival;
     }
 
+    /**
+     * Lambda service getter.
+     * @return Lambda service.
+     */
     public double getLambdaService()
     {
         return this.lambdaService;
     }
 
+    /**
+     * Seed arrival getter.
+     * @return Seed arrival.
+     */
     public int getSeedArrival()
     {
         return this.seedArrival;
     }
 
+    /**
+     * Seed service getter.
+     * @return Seed service.
+     */
     public int getSeedService()
     {
         return this.seedService;
     }
 
+    /**
+     * Arrival generator getter.
+     * @return Arrival generator.
+     */
     public RandomGenerator getArrivalGenerator()
     {
         return this.arrivalGenerator;
     }
 
+    /**
+     * Service generator getter.
+     * @return Service generator.
+     */
     public RandomGenerator getServiceGenerator()
     {
         return this.serviceGenerator;
     }
 
+    /**
+     * Id getter.
+     * @return Id.
+     */
     public int getId()
     {
         return this.id;
@@ -158,8 +192,18 @@ public class Category
      */
     private final int id;
 
-
+    /**
+     * The number of processed jobs of the current category.
+     */
     private int processedCategories;
+
+    /**
+     * The sum of queuing times of the current category.
+     */
     private double queuingTimeSum;
+
+    /**
+     * The sum of service times of the current category.
+     */
     private double serviceTimeSum;
 }

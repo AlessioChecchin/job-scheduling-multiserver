@@ -1,5 +1,7 @@
 package events.entries;
 
+import config.Category;
+
 /**
  * Represents an arrival entry.
  */
@@ -9,18 +11,18 @@ public class ArrivalEntry extends Entry
      * Creates a new arrival entry.
      * @param key The key of the entry.
      */
-    public ArrivalEntry(double key)
+    public ArrivalEntry(double key, Category category)
     {
-        super(key);
+        super(key, category);
     }
 
     /**
      * Setter for start execution time.
      * @param time Start execution time.
      */
-    public void setStartExecution(double time)
+    public void setStartExecution(double executionStart)
     {
-        executionStart = time;
+        this.executionStart = executionStart;
     }
 
     /**
@@ -29,8 +31,11 @@ public class ArrivalEntry extends Entry
      */
     public double getStartExecution()
     {
-        return executionStart;
+        return this.executionStart;
     }
 
+    /**
+     * The moment when the job associated with this entry started executing.
+     */
     private double executionStart;
 }

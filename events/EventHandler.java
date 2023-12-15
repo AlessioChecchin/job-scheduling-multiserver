@@ -19,7 +19,7 @@ public class EventHandler
      */
     public EventHandler()
     {
-        entries = new PriorityQueue<>();
+        this.entries = new PriorityQueue<>();
     }
 
     /**
@@ -30,29 +30,26 @@ public class EventHandler
      */
     public ArrivalEntry generateArrivalEvent(Category catConfig, double currentTime)
     {
-        ArrivalEntry entry = new ArrivalEntry(currentTime + catConfig.getArrivalGenerator().exponentialDistribution(catConfig.getLambdaArrival()));
-        entry.setCategory(catConfig);
-
-        entries.add(entry);
+        ArrivalEntry entry = new ArrivalEntry(currentTime + catConfig.getArrivalGenerator().exponentialDistribution(catConfig.getLambdaArrival()), catConfig);
+        this.entries.add(entry);
 
         return entry;
     }
 
     /**
      * Generates a new finish event (entry)
-     * @param catConfig The category of the job that the event represents.
+     * @param linkedArrival The arrival entry linked to the same job.
      * @param currentTime Current time.
      * @param serverId The server that executed the job.
-     * @param linkedArrival The arrival entry linked to the same job.
      * @return The generated finish event.
      */
-    public FinishEntry generateFinishEvent(Category catConfig, double currentTime, int serverId, ArrivalEntry linkedArrival)
+    public FinishEntry generateFinishEvent(ArrivalEntry linkedArrival, double currentTime, int serverId)
     {
+        Category catConfig = linkedArrival.getCategory();
         double serviceTime = catConfig.getServiceGenerator().exponentialDistribution(catConfig.getLambdaService());
         FinishEntry entry = new FinishEntry(currentTime + serviceTime, serverId, serviceTime, linkedArrival);
 
-        entry.setCategory(catConfig);
-        entries.add(entry);
+        this.entries.add(entry);
 
         return entry;
     }
@@ -63,7 +60,7 @@ public class EventHandler
      */
     public boolean hasEvent()
     {
-        return !entries.isEmpty();
+        return !this.entries.isEmpty();
     }
 
     /**
@@ -72,8 +69,11 @@ public class EventHandler
      */
     public Entry remove()
     {
-        return entries.remove();
+        return this.entries.remove();
     }
 
+    /**
+     * Temporary queue for handling entries.
+     */
     private final PriorityQueue<Entry> entries;
 }
