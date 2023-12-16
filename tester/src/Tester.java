@@ -1,11 +1,15 @@
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.FileReader;
+import java.io.BufferedReader;
+import java.io.Reader;
+
 import java.util.InputMismatchException;
-import java.util.Scanner;
 
 public class Tester
 {
-
-    private static final double EPSILON = 10e-12;
+    // Tolerance for errors (afflicts only doubles).
+    private static final double EPSILON = 10e-18;
 
     /**
      * Tester constructor.
@@ -58,7 +62,7 @@ public class Tester
             {
                 System.out.printf("%s[FAIL]%s%n", ConsoleColors.RED_BOLD_BRIGHT, ConsoleColors.RESET);
                 System.out.print(report.getText());
-                System.out.printf("%sAverage error: %.18f%%%s%n", ConsoleColors.YELLOW_UNDERLINED, report.getAvgError(), ConsoleColors.RESET);
+                System.out.printf("%sAverage error: %.18f%%%s%n", ConsoleColors.YELLOW_UNDERLINED, report.getAvgError() * 100, ConsoleColors.RESET);
             }
             else
             {
@@ -76,7 +80,12 @@ public class Tester
         }
     }
 
-
+    /**
+     * Reads output file
+     * @param path The path of the file to read.
+     * @return The content of the file.
+     * @throws IOException If there are errors while reading the file.
+     */
     protected String readOutputFile(String path) throws IOException
     {
         FileReader fr = new FileReader(path);
@@ -85,6 +94,12 @@ public class Tester
         return result;
     }
 
+    /**
+     * Reads the output of the program to test
+     * @param command Command to start the program.
+     * @return The output of the program.
+     * @throws IOException If there are errors while reading from stdout.
+     */
     protected String readStdout(String command) throws IOException
     {
         Process process = Runtime.getRuntime().exec(command);
@@ -94,6 +109,12 @@ public class Tester
         return result;
     }
 
+    /**
+     * Reads all the content of a stream.
+     * @param reader A reader associate to a stream.
+     * @return The content read.
+     * @throws IOException If there are errors while reading from the stream.
+     */
     protected String read(Reader reader) throws IOException
     {
         StringBuilder builder = new StringBuilder();
@@ -112,6 +133,11 @@ public class Tester
         return builder.toString();
     }
 
+    /**
+     * Gets the skeleton name of a file.
+     * @param fileName The complete filename of the file.
+     * @return The skeleton.
+     */
     public static String getSkeleton(String fileName)
     {
         // Removing extension.
@@ -120,6 +146,11 @@ public class Tester
         return removedExtension.substring(removedExtension.indexOf('_'));
     }
 
+    /**
+     * Gets all the files contained in a folder.
+     * @param folder Path to the folder.
+     * @return An array of files.
+     */
     public static File[] getFileList(String folder)
     {
         File dir = new File(folder);
@@ -129,11 +160,14 @@ public class Tester
     public static void main(String[] args) throws IOException
     {
         String buildCommand = "\"C:\\Program Files\\Java\\jdk-17\\bin\\java.exe\" \"-javaagent:C:\\Program Files\\JetBrains\\IntelliJ IDEA 2023.2\\lib\\idea_rt.jar=56514:C:\\Program Files\\JetBrains\\IntelliJ IDEA 2023.2\\bin\" -Dfile.encoding=UTF-8 -classpath C:\\Users\\Utente\\Desktop\\job_scheduler\\out\\production\\job_scheduler Simulator";
+
+        //String buildCommand = "java -classpath C:\\Users\\Utente\\Desktop\\job_scheduler\\out\\production\\job_scheduler Simulator";
+
         new Tester(System.getProperty("user.dir"), buildCommand);
     }
 
-    private String basePath;
-    private String inputDir;
-    private String outputDir;
-    private String buildCommand;
+    private final String basePath;
+    private final String inputDir;
+    private final String outputDir;
+    private final String buildCommand;
 }

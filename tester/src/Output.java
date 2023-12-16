@@ -1,7 +1,15 @@
 import java.util.*;
 
+/**
+ * Class that represents an output of a simulation of R runs.
+ */
 public class Output
 {
+    /**
+     * Constructor. Note that missing values (from the expected ones) are considered critical errors.
+     * @param str Output string to parse.
+     * @param EPSILON Error sensibility.
+     */
     public Output(String str, double EPSILON)
     {
         Scanner lineScanner = new Scanner(str);
@@ -11,6 +19,7 @@ public class Output
         this.precisionErrorNumber = 0;
         this.precisionErrorsSum = 0.0;
 
+        // Reading line by line and checking if all the basic parameters are there and equals.
         if (lineScanner.hasNextLine())
         {
             Scanner metaScanner = new Scanner(lineScanner.nextLine());
@@ -35,6 +44,7 @@ public class Output
         }
         else throw new InputMismatchException("Empty string input");
 
+        // Checking the type of output.
         this.hasShortOutput = this.pSchedulingPolicyType == 0 && this.rSimulationRepetitions == 1 && this.nTotalJobs <= 10;
 
         if(hasShortOutput)
@@ -74,6 +84,10 @@ public class Output
         lineScanner.close();
     }
 
+    /**
+     * Reads the short output.
+     * @param scanner Scanner attached to the output string.
+     */
     protected void readShortOutput(Scanner scanner)
     {
         this.shortOutput = new ArrayList<>();
@@ -102,6 +116,11 @@ public class Output
         }
     }
 
+    /**
+     * Compares two outputs.
+     * @param out The output to compare.
+     * @return A report about the comparison.
+     */
     public Report compare(Output out)
     {
         StringBuilder builder = new StringBuilder();
@@ -181,7 +200,7 @@ public class Output
                     this.underlineDiff(strTest, strCorrect),
                     this.underlineDiff(strCorrect, strTest),
                     ConsoleColors.YELLOW_BOLD_BRIGHT,
-                    error,
+                    error * 100,
                     ConsoleColors.RESET
             );
 
