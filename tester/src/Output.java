@@ -1,14 +1,15 @@
-import java.io.FileReader;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Scanner;
+import java.util.*;
 
-public class Output {
-    public Output(String str) {
+public class Output
+{
+    public Output(String str, double EPSILON)
+    {
         Scanner lineScanner = new Scanner(str);
 
+        this.EPSILON = EPSILON;
         this.lastComparisonError = false;
+        this.precisionErrorNumber = 0;
+        this.precisionErrorsSum = 0.0;
 
         if (lineScanner.hasNextLine())
         {
@@ -16,23 +17,23 @@ public class Output {
             metaScanner.useDelimiter(",");
 
             if (metaScanner.hasNext()) this.kServerNumber = Integer.parseInt(metaScanner.next());
-            else throw new IllegalArgumentException("Missing server number");
+            else throw new InputMismatchException("Missing server number");
 
             if (metaScanner.hasNext()) this.hCategoriesNumber = Integer.parseInt(metaScanner.next());
-            else throw new IllegalArgumentException("Missing category number");
+            else throw new InputMismatchException("Missing category number");
 
             if (metaScanner.hasNext()) this.nTotalJobs = Integer.parseInt(metaScanner.next());
-            else throw new IllegalArgumentException("Missing number of jobs");
+            else throw new InputMismatchException("Missing number of jobs");
 
             if (metaScanner.hasNext()) this.rSimulationRepetitions = Integer.parseInt(metaScanner.next());
-            else throw new IllegalArgumentException("Missing simulation repetitions");
+            else throw new InputMismatchException("Missing simulation repetitions");
 
             if (metaScanner.hasNext()) this.pSchedulingPolicyType = Integer.parseInt(metaScanner.next());
-            else throw new IllegalArgumentException("Missing type of scheduling policy");
+            else throw new InputMismatchException("Missing type of scheduling policy");
 
             metaScanner.close();
         }
-        else throw new IllegalArgumentException("Empty string input");
+        else throw new InputMismatchException("Empty string input");
 
         this.hasShortOutput = this.pSchedulingPolicyType == 0 && this.rSimulationRepetitions == 1 && this.nTotalJobs <= 10;
 
@@ -42,10 +43,10 @@ public class Output {
         }
 
         if(lineScanner.hasNextLine()) this.avgEta = Double.parseDouble(lineScanner.nextLine());
-        else throw new IllegalArgumentException("Missing average end time");
+        else throw new InputMismatchException("Missing average end time");
 
         if(lineScanner.hasNextLine()) this.avgQueuingTime = Double.parseDouble(lineScanner.nextLine());
-        else throw new IllegalArgumentException("Missing average queuing time (all)");
+        else throw new InputMismatchException("Missing average queuing time (all)");
 
         defaultOutput = new ArrayList<>();
 
@@ -58,13 +59,13 @@ public class Output {
             DefaultOutputElement element = new DefaultOutputElement();
 
             if (metaScanner.hasNext()) element.nr = Double.parseDouble(metaScanner.next());
-            else throw new IllegalArgumentException("Missing nr");
+            else throw new InputMismatchException("Missing nr");
 
             if (metaScanner.hasNext()) element.avgQueuingTime = Double.parseDouble(metaScanner.next());
-            else throw new IllegalArgumentException("Missing aqt");
+            else throw new InputMismatchException("Missing aqt");
 
             if (metaScanner.hasNext()) element.avgServiceTime = Double.parseDouble(metaScanner.next());
-            else throw new IllegalArgumentException("Missing service time");
+            else throw new InputMismatchException("Missing service time");
 
             this.defaultOutput.add(element);
             metaScanner.close();
@@ -86,13 +87,13 @@ public class Output {
             ShortOutputElement element = new ShortOutputElement();
 
             if (metaScanner.hasNext()) element.te = Double.parseDouble(metaScanner.next());
-            else throw new IllegalArgumentException("Missing time (short output)");
+            else throw new InputMismatchException("Missing time (short output)");
 
             if (metaScanner.hasNext()) element.se = Double.parseDouble(metaScanner.next());
-            else throw new IllegalArgumentException("Missing service time (short output)");
+            else throw new InputMismatchException("Missing service time (short output)");
 
             if (metaScanner.hasNext()) element.ce = Integer.parseInt(metaScanner.next());
-            else throw new IllegalArgumentException("Missing category id (short output)");
+            else throw new InputMismatchException("Missing category id (short output)");
 
             this.shortOutput.add(element);
             metaScanner.close();
@@ -105,6 +106,10 @@ public class Output {
     {
         StringBuilder builder = new StringBuilder();
 
+        this.lastComparisonError = false;
+        this.precisionErrorNumber = 0;
+        this.precisionErrorsSum = 0;
+
         builder
                 .append(this.compare(this.kServerNumber, out.kServerNumber).report).append(',')
                 .append(this.compare(this.hCategoriesNumber, out.hCategoriesNumber).report).append(',')
@@ -116,7 +121,7 @@ public class Output {
         if(this.hasShortOutput != out.hasShortOutput)
         {
             builder.append("[CRITICAL] Output types are different");
-            return new Report(builder.toString(), 100, false);
+            return new Report(builder.toString(), this.getAvgError(), false);
         }
 
         if(this.hasShortOutput)
@@ -124,7 +129,7 @@ public class Output {
             if(this.shortOutput.size() != out.shortOutput.size())
             {
                 builder.append("[CRITICAL] Short output array have different size");
-                return new Report(builder.toString(), 100, false);
+                return new Report(builder.toString(), this.getAvgError(), false);
             }
 
             for(int i = 0; i < this.shortOutput.size(); i++)
@@ -144,7 +149,7 @@ public class Output {
         if(this.defaultOutput.size() != out.defaultOutput.size())
         {
             builder.append("[CRITICAL] Default output array have different size");
-            return new Report(builder.toString(), 100, false);
+            return new Report(builder.toString(), this.getAvgError(), false);
         }
 
         for(int i = 0; i < this.defaultOutput.size(); i++)
@@ -152,15 +157,16 @@ public class Output {
             builder
                     .append(this.compare(this.defaultOutput.get(i).nr, out.defaultOutput.get(i).nr).report).append(',')
                     .append(this.compare(this.defaultOutput.get(i).avgQueuingTime, out.defaultOutput.get(i).avgQueuingTime).report).append(',')
-                    .append(this.compare(this.defaultOutput.get(i).avgServiceTime, out.defaultOutput.get(i).avgServiceTime).report).append(',')
+                    .append(this.compare(this.defaultOutput.get(i).avgServiceTime, out.defaultOutput.get(i).avgServiceTime).report)
                     .append(System.lineSeparator());
         }
 
-        return new Report(builder.toString(), 0, !this.lastComparisonError);
+        return new Report(builder.toString(), this.getAvgError(), !this.lastComparisonError);
 
     }
 
-    private TypeComparison compare(double test, double correct) {
+    private TypeComparison compare(double test, double correct)
+    {
         TypeComparison comparison = new TypeComparison();
 
         if (Math.abs(test - correct) > EPSILON)
@@ -168,15 +174,78 @@ public class Output {
             double error = Math.abs((test - correct));
             if(correct != 0) error = Math.abs(error / correct);
 
-            comparison.report = String.format("%.18f [%.18f %.18f]", test, correct, error);
+            String strTest = String.format(Locale.US, "%.18f", test);
+            String strCorrect = String.format(Locale.US, "%.18f", correct);
+
+            comparison.report = String.format(Locale.US, "%s [%s (error of: %s%.18f%%%s)]",
+                    this.underlineDiff(strTest, strCorrect),
+                    this.underlineDiff(strCorrect, strTest),
+                    ConsoleColors.YELLOW_BOLD_BRIGHT,
+                    error,
+                    ConsoleColors.RESET
+            );
+
             this.lastComparisonError =  true;
+            this.precisionErrorsSum += error;
+            this.precisionErrorNumber++;
         }
         else
         {
-            comparison.report = String.format("%f", test);
+            comparison.report = String.format(Locale.US, "%f", test);
         }
 
         return comparison;
+    }
+
+    private String underlineDiff(String target, String compare)
+    {
+        StringBuilder builder = new StringBuilder();
+
+        int i = 0;
+        boolean streak = false;
+        while(i < target.length() && i < compare.length())
+        {
+            if(target.charAt(i) != compare.charAt(i))
+            {
+                if(!streak)
+                {
+                    streak = true;
+                    builder.append(ConsoleColors.RED_BOLD_BRIGHT);
+                }
+
+            }
+            else
+            {
+                if(streak)
+                {
+                    builder.append(ConsoleColors.RESET);
+                }
+                streak = false;
+            }
+
+            builder.append(target.charAt(i));
+
+            i++;
+        }
+
+        while(i < target.length())
+        {
+            if(!streak)
+            {
+                streak = true;
+                builder.append(ConsoleColors.RED_BOLD_BRIGHT);
+            }
+
+            builder.append(target.charAt(i));
+            i++;
+        }
+
+        if(streak)
+        {
+            builder.append(ConsoleColors.RESET);
+        }
+
+        return builder.toString();
     }
 
     private TypeComparison compare(int a, int b) {
@@ -195,20 +264,28 @@ public class Output {
         return comparison;
     }
 
-    private int kServerNumber;
-    private int hCategoriesNumber;
-    private int nTotalJobs;
-    private int rSimulationRepetitions;
-    private int pSchedulingPolicyType;
-    private boolean hasShortOutput;
+    private double getAvgError()
+    {
+        if(this.precisionErrorNumber == 0) return 0;
+        return  this.precisionErrorsSum / this.precisionErrorNumber;
+    }
+
+
+    private final int kServerNumber;
+    private final int hCategoriesNumber;
+    private final int nTotalJobs;
+    private final int rSimulationRepetitions;
+    private final int pSchedulingPolicyType;
+    private final boolean hasShortOutput;
     private ArrayList<ShortOutputElement> shortOutput;
-    private double avgEta;
-    private double avgQueuingTime;
+    private final double avgEta;
+    private final double avgQueuingTime;
 
-    private static double EPSILON = 10E-16;
-    private ArrayList<DefaultOutputElement> defaultOutput;
-
+    private final double EPSILON;
+    private final ArrayList<DefaultOutputElement> defaultOutput;
     private boolean lastComparisonError;
+    private double precisionErrorsSum;
+    private int precisionErrorNumber;
 
     private static class ShortOutputElement
     {

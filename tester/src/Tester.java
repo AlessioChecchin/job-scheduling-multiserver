@@ -1,53 +1,86 @@
 import java.io.*;
+import java.util.InputMismatchException;
 import java.util.Scanner;
 
 public class Tester
 {
-    public Tester(String basePath, String buildCommand) throws IOException
+
+    private static final double EPSILON = 10e-12;
+
+    /**
+     * Tester constructor.
+     * @param basePath Path to the folder that contains a /input and /output folder.
+     * @param buildCommand Command used to execute the program to test. Input parameters must be empty,
+     *                     because the tester will inject all the necessary parameters.
+     */
+    public Tester(String basePath, String buildCommand)
     {
         this.basePath = basePath;
+        this.buildCommand = buildCommand;
+
+        // Generating paths to subdirectories.
         this.inputDir = basePath.concat("/input/");
         this.outputDir = basePath.concat("/output/");
 
-
+        // Testing each input file.
         for(File file: getFileList(inputDir))
         {
-            String fileSkeleton = getSkeleton(file.getName());
+            this.processFile(file);
+        }
+    }
 
-            String strTest = "";
-            String strCorrect = "";
+    /**
+     * Runs the tester against the provided input file.
+     * It runs the program to test and compares the result (from stdout) with the expected output file.
+     * @param file Input file.
+     */
+    protected void processFile(File file)
+    {
+        // Obtains the skeleton file name.
+        // It's expected that input file is in the form of input_<skeleton>.in
+        // It's expected that output file
+        String fileSkeleton = getSkeleton(file.getName());
 
-            try
+        System.out.printf(">> Processing %s...", file.getName());
+
+        try
+        {
+            // Formatting output from stdout
+            Output testOutput = new Output(this.readStdout(this.buildCommand + " " + file.getPath()), EPSILON);
+
+            // Formatting output from output file (this file is considered correct)
+            Output correctOutput = new Output(this.readOutputFile(this.outputDir + "output" + fileSkeleton + ".out"), EPSILON);
+
+            // Comparing outputs
+            Output.Report report = testOutput.compare(correctOutput);
+
+            if(!report.isAcceptable())
             {
-                Output testOutput = new Output(strTest = this.readStdout(buildCommand + file.getPath()));
-                Output correctOutput = new Output(strCorrect = this.readOutputFile(this.outputDir + "output" + fileSkeleton + ".out"));
-
-                Output.Report report = testOutput.compare(correctOutput);
-                if(!report.isAcceptable())
-                {
-                    System.out.println(report.getText());
-                }
-
+                System.out.printf("%s[FAIL]%s%n", ConsoleColors.RED_BOLD_BRIGHT, ConsoleColors.RESET);
+                System.out.print(report.getText());
+                System.out.printf("%sAverage error: %.18f%%%s%n", ConsoleColors.YELLOW_UNDERLINED, report.getAvgError(), ConsoleColors.RESET);
             }
-            catch(Exception e)
+            else
             {
-                System.out.println("Error at " + file.getName());
-                System.out.println("Test: ");
-                System.out.println(strTest);
-                System.out.println("Correct: ");
-                System.out.println(strCorrect);
-                e.printStackTrace();
+                System.out.printf("%s[OK]%s%n", ConsoleColors.GREEN_BOLD_BRIGHT, ConsoleColors.RESET);
             }
 
         }
+        catch(IOException e)
+        {
+            System.out.printf("%s[CRITICAL] IOException caught: %s%s", ConsoleColors.RED_BOLD_BRIGHT, e.getMessage(), ConsoleColors.RESET);
+        }
+        catch(InputMismatchException e)
+        {
+            System.out.printf("%s[CRITICAL] InputMismatch caught: %s%s", ConsoleColors.RED_BOLD_BRIGHT, e.getMessage(), ConsoleColors.RESET);
+        }
     }
+
 
     protected String readOutputFile(String path) throws IOException
     {
         FileReader fr = new FileReader(path);
-
         String result = this.read(fr);
-
         fr.close();
         return result;
     }
@@ -56,9 +89,7 @@ public class Tester
     {
         Process process = Runtime.getRuntime().exec(command);
         BufferedReader reader = process.inputReader();
-
         String result = this.read(reader);
-
         reader.close();
         return result;
     }
@@ -97,11 +128,12 @@ public class Tester
 
     public static void main(String[] args) throws IOException
     {
-        String buildCommand = "\"C:\\Program Files\\Java\\jdk-17\\bin\\java.exe\" \"-javaagent:C:\\Program Files\\JetBrains\\IntelliJ IDEA 2023.2\\lib\\idea_rt.jar=56514:C:\\Program Files\\JetBrains\\IntelliJ IDEA 2023.2\\bin\" -Dfile.encoding=UTF-8 -classpath C:\\Users\\Utente\\Desktop\\job_scheduler\\out\\production\\job_scheduler Simulator ";
+        String buildCommand = "\"C:\\Program Files\\Java\\jdk-17\\bin\\java.exe\" \"-javaagent:C:\\Program Files\\JetBrains\\IntelliJ IDEA 2023.2\\lib\\idea_rt.jar=56514:C:\\Program Files\\JetBrains\\IntelliJ IDEA 2023.2\\bin\" -Dfile.encoding=UTF-8 -classpath C:\\Users\\Utente\\Desktop\\job_scheduler\\out\\production\\job_scheduler Simulator";
         new Tester(System.getProperty("user.dir"), buildCommand);
     }
 
     private String basePath;
     private String inputDir;
     private String outputDir;
+    private String buildCommand;
 }
