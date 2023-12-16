@@ -2,6 +2,7 @@ import java.util.*;
 
 /**
  * Class that represents an output of a simulation of R runs.
+ * @author Alessio Checchin
  */
 public class Output
 {

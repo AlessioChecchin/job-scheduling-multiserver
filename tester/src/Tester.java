@@ -6,6 +6,10 @@ import java.io.Reader;
 
 import java.util.InputMismatchException;
 
+/**
+ * Class used for testing.
+ * @author Alessio Checchin
+ */
 public class Tester
 {
     // Tolerance for errors (afflicts only doubles).
