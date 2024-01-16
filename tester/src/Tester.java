@@ -13,7 +13,7 @@ import java.util.InputMismatchException;
 public class Tester
 {
     // Tolerance for errors (afflicts only doubles).
-    private static final double EPSILON = 10e-18;
+    private static final double EPSILON = 10e-9;
 
     /**
      * Tester constructor.
@@ -31,25 +31,53 @@ public class Tester
         this.outputDir = basePath.concat("/output/");
 
         // Testing each input file.
-        for(File file: getFileList(inputDir))
+        File[] list = new File(this.inputDir).listFiles();
+
+        if(list != null)
         {
-            this.processFile(file);
+            for(File element: list)
+            {
+                this.processTree(element, "");
+            }
         }
     }
+
+    protected void processTree(File root, String subpath)
+    {
+        if(root.isDirectory())
+        {
+            File[] list = root.listFiles();
+
+            if(list != null)
+            {
+                for(File element: list)
+                {
+                    this.processTree(element, subpath + root.getName() + "/");
+                }
+            }
+        }
+        else
+        {
+            this.processFile(root, subpath);
+        }
+    }
+
+
 
     /**
      * Runs the tester against the provided input file.
      * It runs the program to test and compares the result (from stdout) with the expected output file.
      * @param file Input file.
+     * @param subpath The subpath relative to the input directory that contains the file.
      */
-    protected void processFile(File file)
+    protected void processFile(File file, String subpath)
     {
         // Obtains the skeleton file name.
         // It's expected that input file is in the form of input_<skeleton>.in
         // It's expected that output file
         String fileSkeleton = getSkeleton(file.getName());
 
-        System.out.printf(">> Processing %s...", file.getName());
+        System.out.printf(">> Processing %s...", subpath + file.getName());
 
         try
         {
@@ -57,7 +85,7 @@ public class Tester
             Output testOutput = new Output(this.readStdout(this.buildCommand + " " + file.getPath()), EPSILON);
 
             // Formatting output from output file (this file is considered correct)
-            Output correctOutput = new Output(this.readOutputFile(this.outputDir + "output" + fileSkeleton + ".out"), EPSILON);
+            Output correctOutput = new Output(this.readOutputFile(this.outputDir + subpath + "output" + fileSkeleton + ".out"), EPSILON);
 
             // Comparing outputs
             Output.Report report = testOutput.compare(correctOutput);
@@ -148,17 +176,6 @@ public class Tester
         String removedExtension = fileName.substring(0, fileName.lastIndexOf('.'));
         // Removing prefix.
         return removedExtension.substring(removedExtension.indexOf('_'));
-    }
-
-    /**
-     * Gets all the files contained in a folder.
-     * @param folder Path to the folder.
-     * @return An array of files.
-     */
-    public static File[] getFileList(String folder)
-    {
-        File dir = new File(folder);
-        return dir.listFiles();
     }
 
     public static void main(String[] args) throws IOException

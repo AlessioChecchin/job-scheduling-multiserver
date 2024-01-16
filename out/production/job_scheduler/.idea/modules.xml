@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/job_scheduler.iml" filepath="$PROJECT_DIR$/.idea/job_scheduler.iml" />
+      <module fileurl="file://$PROJECT_DIR$/sample_generator/sample_generator.iml" filepath="$PROJECT_DIR$/sample_generator/sample_generator.iml" />
       <module fileurl="file://$PROJECT_DIR$/tester/tester.iml" filepath="$PROJECT_DIR$/tester/tester.iml" />
     </modules>
   </component>

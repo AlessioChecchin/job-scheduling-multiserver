@@ -99,11 +99,10 @@ public class Simulator
 
                     this.pushToHistory(entry);
                 }
+
             }
             else if(entry instanceof FinishEntry)
             {
-                // Each Finish event must be handled.
-
                 // Scheduling the finish event
                 scheduler.schedule(entry);
 
@@ -273,6 +272,7 @@ public class Simulator
                 int id = catConfig.getId();
 
                 builder
+                        //.append(id).append(',')
                         .append(config.getAvgCategoryNumber(id)).append(',')
                         .append(config.getAvgCategoryQueuingTime(id)).append(',')
                         .append(config.getAvgCategoryServiceTime(id)).append(System.lineSeparator());

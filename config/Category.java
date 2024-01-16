@@ -61,7 +61,10 @@ public class Category
      */
     public double getAvgQueuingTime()
     {
-        if(this.processedCategories == 0) throw new IllegalStateException();
+        if(this.processedCategories == 0)
+            return 0;
+            //throw new IllegalStateException();
+
         return this.queuingTimeSum / this.processedCategories;
     }
 
@@ -80,7 +83,9 @@ public class Category
      */
     public double getAvgServiceTime()
     {
-        if(this.processedCategories == 0) throw new IllegalStateException();
+        if(this.processedCategories == 0)
+            return 0;
+            //throw new IllegalStateException();
         return this.serviceTimeSum / this.processedCategories;
     }
 
