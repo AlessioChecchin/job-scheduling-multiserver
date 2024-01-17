@@ -16,5 +16,7 @@ public interface SchedulingPolicy
      * @param scheduler The scheduler that handles entries and servers.
      * @return The selected server.
      */
-    Server selectServer(Entry entry, Scheduler scheduler);
+    Server pollServer(Entry entry, Scheduler scheduler);
+
+    void putServer(Server server, Scheduler scheduler);
 }

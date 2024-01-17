@@ -7,6 +7,7 @@ import events.entries.FinishEntry;
 
 import scheduling.policy.SchedulingPolicy;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -21,7 +22,7 @@ public class Scheduler
      * @param evtHandler The event handler.
      * @param policy A scheduling policy.
      */
-    public Scheduler(List<Server> serverList, EventHandler evtHandler, SchedulingPolicy policy)
+    public Scheduler(Collection<Server> serverList, EventHandler evtHandler, SchedulingPolicy policy)
     {
         this.serverList = serverList;
         this.evtHandler = evtHandler;
@@ -35,7 +36,7 @@ public class Scheduler
      * Returns the list of servers that the scheduler is handling.
      * @return The list of servers that the scheduler is handling.
      */
-    public List<Server> getServers()
+    public Collection<Server> getServers()
     {
         return this.serverList;
     }
@@ -47,7 +48,7 @@ public class Scheduler
     public void schedule(Entry entry)
     {
         // Obtaining server target based on current target and scheduler state.
-        Server target = this.policy.selectServer(entry, this);
+        Server target = this.policy.pollServer(entry, this);
 
         if(entry instanceof ArrivalEntry)
         {
@@ -61,12 +62,16 @@ public class Scheduler
             }
 
             target.enqueue(entry);
+            // Adjust estimated queuing time.
+            target.setWaitingTime(target.getWaitingTime() + 1.0 / entry.getCategory().getLambdaService());
+
             this.arrivedJobs++;
         }
         else if(entry instanceof FinishEntry)
         {
             // Entry that finished executing
             Entry finished = target.remove();
+            target.setWaitingTime(target.getWaitingTime() - 1.0 / entry.getCategory().getLambdaService());
 
             // Current executing job
             if(target.isBusy())
@@ -80,6 +85,8 @@ public class Scheduler
 
             this.finishedJobs++;
         }
+
+        policy.putServer(target, this);
     }
 
     /**
@@ -113,7 +120,7 @@ public class Scheduler
     /**
      * Server list.
      */
-    private final List<Server> serverList;
+    private final Collection<Server> serverList;
 
     /**
      * Number of jobs arrived.

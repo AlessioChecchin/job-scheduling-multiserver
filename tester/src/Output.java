@@ -191,8 +191,8 @@ public class Output
 
         if (Math.abs(test - correct) > EPSILON)
         {
-            double error = Math.abs((test - correct));
-            if(correct != 0) error = Math.abs(error / correct);
+            double error = (test - correct);
+            if(correct != 0) error = (error / correct);
 
             String strTest = String.format(Locale.US, "%.18f", test);
             String strCorrect = String.format(Locale.US, "%.18f", correct);

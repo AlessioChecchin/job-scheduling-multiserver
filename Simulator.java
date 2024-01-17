@@ -6,20 +6,18 @@ import events.entries.ArrivalEntry;
 import events.entries.Entry;
 import events.entries.FinishEntry;
 
+import scheduling.policy.CustomPolicy;
 import scheduling.policy.DefaultPolicy;
 import scheduling.Scheduler;
 import scheduling.Server;
 
+import scheduling.policy.SchedulingPolicy;
 import utils.RandomGenerator;
 
 import java.io.FileReader;
 import java.io.IOException;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.PriorityQueue;
-import java.util.Scanner;
+import java.util.*;
 
 /**
  * Class that implements a simulator.
@@ -80,8 +78,19 @@ public class Simulator
         // Initializing jobs.
         this.initializeJobs();
 
+        SchedulingPolicy policy = null;
+
+        if(config.getSchedulingPolicy() == 0)
+        {
+            policy = new DefaultPolicy();
+        }
+        else
+        {
+            policy = new CustomPolicy();
+        }
+
         // Creating a new scheduler.
-        Scheduler scheduler = new Scheduler(this.createServers(), this.evtHandler, new DefaultPolicy());
+        Scheduler scheduler = new Scheduler(this.createServers(), this.evtHandler, policy);
 
         double currentEta = 0;
 
@@ -143,14 +152,23 @@ public class Simulator
      * Creates the servers
      * @return The list of created servers.
      */
-    protected List<Server> createServers()
+    protected Collection<Server> createServers()
     {
-        List<Server> servers = new ArrayList<>(Arrays.asList(new Server[config.getServerNumber()]));
+        Collection<Server> servers = null;
+
+        if(config.getSchedulingPolicy() == 0)
+        {
+            servers = new ArrayList<>();
+        }
+        else
+        {
+            servers = new PriorityQueue<>();
+        }
 
         // Creating K servers.
         for(int i = 0; i < config.getServerNumber(); i++)
         {
-            servers.set(i, new Server(i));
+            servers.add(new Server(i));
         }
 
         return servers;
