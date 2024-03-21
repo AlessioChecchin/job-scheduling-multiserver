@@ -14,9 +14,9 @@ import java.util.List;
  */
 public class DefaultPolicy implements SchedulingPolicy
 {
-    public Server selectServer(Entry entry, Scheduler scheduler)
+    public Server pollServer(Entry entry, Scheduler scheduler)
     {
-        List<Server> serverList = scheduler.getServers();
+        List<Server> serverList = (List<Server>) scheduler.getServers();
 
         if(entry instanceof ArrivalEntry)
         {
@@ -28,5 +28,11 @@ public class DefaultPolicy implements SchedulingPolicy
         }
 
         return null;
+    }
+
+    @Override
+    public void putServer(Server server, Scheduler scheduler)
+    {
+
     }
 }

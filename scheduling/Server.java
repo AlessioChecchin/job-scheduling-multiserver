@@ -8,7 +8,7 @@ import java.util.Queue;
 /**
  * Class that represents a simulation server.
  */
-public class Server
+public class Server implements Comparable<Server>
 {
     /**
      * Creates a server
@@ -18,6 +18,7 @@ public class Server
     {
         this.jobs = new LinkedList<>();
         this.id = id;
+        this.waitingTime = 0;
     }
 
     /**
@@ -66,12 +67,46 @@ public class Server
     }
 
     /**
+     * Set the estimated waiting time.
+     * @param newValue The estimated waiting time.
+     */
+    public void setWaitingTime(double newValue)
+    {
+        this.waitingTime = newValue;
+    }
+
+    /**
+     * Returns the current estimated waiting time for a new job.
+     * @return Estimated waiting time.
+     */
+    public double getWaitingTime()
+    {
+        return waitingTime;
+    }
+
+    /**
+     * Compare to override
+     * @param o the object to be compared.
+     * @return Double.compare(this.waitingTime, o.waitingTime)
+     */
+    @Override
+    public int compareTo(Server o)
+    {
+        return Double.compare(this.waitingTime, o.waitingTime);
+    }
+
+    /**
      * Jobs to execute.
      */
     private final Queue<Entry> jobs;
 
     /**
-     * Id of the server.
+     * Identifier of the server.
      */
     private final int id;
+
+    /**
+     * Estimated waiting time.
+     */
+    private double waitingTime;
 }
